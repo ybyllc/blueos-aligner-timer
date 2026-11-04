@@ -1,0 +1,28 @@
+{
+  "package": "com.personal.alignercatwatchface",
+  "name": "猫咪陪你",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "icon": "/watch300102/assets/icon.png",
+  "deviceTypeList": ["watch-square"],
+  "config": { "designWidth": 466 },
+  "router": {
+    "entry": "watch300102",
+    "watchfaces": {
+      "watch300102": {
+        "id": 300102,
+        "name": "猫咪陪你",
+        "component": "index",
+        "edit": "",
+        "features": [
+          { "name": "blueos.app.appmanager.router" },
+          { "name": "blueos.window.prompt" }
+        ],
+        "params": {
+          "previewImage": ["local://com.personal.alignercatwatchface/watch300102/assets/preview.png"],
+          "hpw": 0
+        }
+      }
+    }
+  }
+}

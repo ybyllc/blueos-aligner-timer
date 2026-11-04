@@ -1,0 +1,78 @@
+<script>
+  import router from '@blueos.app.appmanager.router'
+  import prompt from '@blueos.window.prompt'
+
+  export default {
+    data: { clock: '--:--', dateLabel: '', launching: false },
+    onInit() {
+      this.refreshClock()
+    },
+    onReady() {
+      this.startClock()
+    },
+    onShow() {
+      this.startClock()
+    },
+    onHide() {
+      this.stopClock()
+    },
+    onDestroy() {
+      this.stopClock()
+    },
+    refreshClock() {
+      const now = new Date()
+      const pad = value => String(value).padStart(2, '0')
+      const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+      this.clock = `${pad(now.getHours())}:${pad(now.getMinutes())}`
+      this.dateLabel = `${now.getMonth() + 1}月${now.getDate()}日  ${weekdays[now.getDay()]}`
+    },
+    startClock() {
+      this.stopClock()
+      this.launching = false
+      this.refreshClock()
+      const now = new Date()
+      this.minuteTimer = setTimeout(() => this.startClock(), 60000 - now.getSeconds() * 1000 - now.getMilliseconds() + 20)
+    },
+    stopClock() {
+      if (this.minuteTimer) clearTimeout(this.minuteTimer)
+      this.minuteTimer = null
+    },
+    openTimer() {
+      if (this.launching) return
+      this.launching = true
+      try {
+        router.push({ uri: 'hap://app/com.personal.alignertimer/pages/Demo' })
+      } catch (error) {
+        prompt.showToast({ message: '请先安装牙套计时器' })
+      }
+      this.launching = false
+    },
+  }
+</script>
+
+<template>
+  <div class="face">
+    <text class="date">{{ dateLabel }}</text>
+    <text class="clock">{{ clock }}</text>
+    <div class="cat-button" onclick="openTimer">
+      <image class="cat" src="/watch300102/assets/cat.png" />
+    </div>
+    <div class="shortcut" onclick="openTimer">
+      <image class="tooth" src="/watch300102/assets/aligner-icon.png" />
+      <text class="shortcut-label">牙套计时</text>
+      <text class="arrow">›</text>
+    </div>
+  </div>
+</template>
+
+<style>
+  .face { width: 100%; height: 100%; background-color: #191d24; flex-direction: column; align-items: center; justify-content: center; }
+  .date { width: 366px; height: 40px; lines: 1; text-align: center; font-size: 28px; color: #c7bfb2; }
+  .clock { width: 410px; height: 108px; lines: 1; text-align: center; font-size: 94px; color: #fff2dc; }
+  .cat-button { width: 320px; height: 180px; justify-content: center; align-items: center; }
+  .cat { width: 320px; height: 180px; }
+  .shortcut { width: 306px; height: 76px; margin-top: 8px; background-color: #c5dfb6; border-radius: 38px; justify-content: center; align-items: center; }
+  .tooth { width: 44px; height: 44px; margin-right: 14px; }
+  .shortcut-label { width: 146px; height: 48px; lines: 1; font-size: 32px; color: #26382c; }
+  .arrow { width: 26px; height: 48px; lines: 1; text-align: center; font-size: 40px; color: #435944; }
+</style>
