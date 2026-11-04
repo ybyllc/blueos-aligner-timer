@@ -1,0 +1,27 @@
+<script>
+  import storage from '@blueos.storage.storage'
+  import vibrator from '@blueos.hardware.vibrator.vibrator'
+  import notification from '@blueos.app.notification.notificationManager'
+
+  export default {
+    onCreate() {},
+    remindWear(params) {
+      storage.get({ key: 'aligner-state',
+        success: raw => {
+          let state
+          try { state = JSON.parse(raw) } catch (error) { return }
+          if (!state || state.wearing || !params || state.deadline !== params.deadline) return
+          vibrator.vibrate({ mode: 'long' })
+          notification.publish({
+            request: {
+              icon: '/assets/images/aligner-icon.png', id: 1, appName: '牙套计时器',
+              contentType: 1, channel: 2, deliveryTime: Date.now(),
+              content: { title: '该戴回牙套了', text: '摘下时间已到，请清洁后戴回牙套。' },
+            },
+            success: () => {}, fail: () => console.log('牙套提醒通知发送失败'), complete: () => {},
+          })
+        },
+      })
+    },
+  }
+</script>

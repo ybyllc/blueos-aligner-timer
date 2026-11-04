@@ -1,0 +1,177 @@
+<script>
+  import storage from '@blueos.storage.storage'
+  import schedule from '@blueos.app.appmanager.schedule'
+  import prompt from '@blueos.window.prompt'
+  import { freshState, advance, restore, duration, dailyRecords } from '../../timer'
+
+  export default {
+    data: { ready: false, wearing: false, clock: '00:00:00', target: 20, percent: 100, records: [] },
+    onInit() {
+      this.state = freshState(Date.now())
+      storage.get({ key: 'aligner-state',
+        success: raw => { this.state = restore(raw, Date.now()); this.ready = true; this.refresh(); this.save() },
+        fail: () => { this.ready = true; this.refresh() },
+      })
+    },
+    onShow() {
+      this.refresh()
+      this.stopTicker()
+      this.ticker = setInterval(() => this.refresh(), 1000)
+    },
+    onHide() { this.stopTicker(); this.save() },
+    onDestroy() { this.stopTicker(); this.save() },
+    stopTicker() {
+      if (this.ticker) clearInterval(this.ticker)
+      this.ticker = null
+    },
+    refresh() {
+      if (!this.ready) return
+      const now = Date.now()
+      const previousDay = this.state.day
+      advance(this.state, now)
+      this.wearing = this.state.wearing
+      this.target = this.state.target
+      const away = this.state.removedAt ? Math.max(0, now - this.state.removedAt) : 0
+      this.clock = duration(this.wearing ? this.state.elapsed : away)
+      this.percent = Math.min(100, this.state.elapsed / (this.target * 3600000) * 100)
+      if (this.recordsMinute !== Math.floor(now / 60000) || previousDay !== this.state.day) {
+        this.refreshRecords()
+        this.recordsMinute = Math.floor(now / 60000)
+      }
+      if (previousDay !== this.state.day) this.save()
+    },
+    save() {
+      if (!this.ready) return
+      advance(this.state, Date.now())
+      this.pendingSave = JSON.stringify(this.state)
+      this.flushSave()
+    },
+    flushSave() {
+      if (this.writing || !this.pendingSave) return
+      const value = this.pendingSave
+      this.pendingSave = null
+      this.writing = true
+      storage.set({ key: 'aligner-state', value,
+        success: () => { this.writing = false; this.flushSave() },
+        fail: () => {
+          this.writing = false
+          if (!this.pendingSave) this.pendingSave = value
+          prompt.showToast({ message: '记录保存失败，请稍后重试' })
+        },
+      })
+    },
+    toggleWear() {
+      if (!this.ready || this.scheduling) return
+      advance(this.state, Date.now())
+      if (!this.state.wearing) {
+        if (this.state.job >= 0) schedule.cancel(this.state.job)
+        this.state.job = -1
+        this.state.deadline = 0
+        this.state.removedAt = 0
+        this.state.wearing = true
+        this.save()
+        this.refresh()
+        return
+      }
+      this.state.wearing = false
+      this.state.removedAt = Date.now()
+      this.state.deadline = this.state.removedAt + this.state.minutes * 60000
+      this.scheduling = true
+      this.save()
+      this.refresh()
+      schedule.scheduleJob({
+        type: 2, timeout: this.state.minutes * 60000, triggerMethod: 'remindWear',
+        params: { deadline: this.state.deadline },
+        success: result => { this.scheduling = false; this.state.job = result.id; this.save() },
+        fail: () => {
+          this.scheduling = false
+          prompt.showToast({ message: '后台提醒设置失败，请使用系统倒计时' })
+        },
+      })
+    },
+    lessTarget() { this.adjustTarget(-1) },
+    moreTarget() { this.adjustTarget(1) },
+    adjustTarget(delta) {
+      if (!this.ready) return
+      advance(this.state, Date.now())
+      this.state.target = Math.max(1, Math.min(24, this.state.target + delta))
+      this.save()
+      this.refresh()
+      this.refreshRecords()
+    },
+    closePlan() { this.$element('screens').swipeTo({ index: 0 }) },
+    refreshRecords() { if (this.ready) this.records = dailyRecords(this.state) },
+    screenChanged() { this.refresh(); this.refreshRecords() },
+  }
+</script>
+
+<template>
+  <swiper id="screens" class="screens" index="0" indicator="false" loop="false" onchange="screenChanged">
+    <div class="home">
+      <stack class="dial" onclick="toggleWear">
+        <progress class="ring" style="color: {{ wearing ? '#7bc77e' : '#f05252' }}; background-color: {{ wearing ? '#e0e2e0' : '#facbd0' }};" type="arc" percent="{{ percent }}" />
+        <div class="dial-overlay">
+          <div class="center" style="background-color: {{ wearing ? '#ffffff' : '#ffedf0' }};">
+            <text class="status" style="color: {{ wearing ? '#171c18' : '#cb4145' }};">{{ ready ? (wearing ? '配戴牙套中' : '已摘下牙套') : '读取中…' }}</text>
+            <text class="clock">{{ clock }}</text>
+          </div>
+        </div>
+      </stack>
+    </div>
+    <div class="history">
+      <text class="history-title">每日记录</text>
+      <list class="record-list">
+        <list-item class="record" type="day" for="{{ records }}">
+          <div class="record-main">
+            <text class="record-date">{{ $item.date }}</text>
+            <text class="record-time">{{ $item.time }}</text>
+            <text class="record-goal">{{ $item.goal }}</text>
+          </div>
+          <text class="record-status" style="color: {{ $item.reached ? '#285c32' : '#616a65' }};">{{ $item.status }}</text>
+        </list-item>
+      </list>
+      <text class="history-empty" if="{{ records.length < 2 }}">从今天开始记录，跨天自动保存</text>
+      <input class="history-back" type="button" value="返回计时" onclick="closePlan" />
+    </div>
+    <div class="plan">
+      <text class="plan-title">编辑计划</text>
+      <text class="plan-label">每日佩戴目标</text>
+      <text class="hours">{{ target }}<span class="unit"> 小时</span></text>
+      <div class="controls">
+        <input class="step" type="button" value="−" onclick="lessTarget" />
+        <input class="step" type="button" value="+" onclick="moreTarget" />
+      </div>
+      <input class="done" type="button" value="完成" onclick="closePlan" />
+    </div>
+  </swiper>
+</template>
+
+<style>
+  .screens { width: 100%; height: 100%; background-color: #f4f5f4; }
+  .home { width: 100%; height: 100%; flex-direction: column; justify-content: center; align-items: center; }
+  .dial { width: 430px; height: 430px; }
+  .ring { width: 430px; height: 430px; stroke-width: 18px; start-angle: 270deg; total-angle: -360deg; }
+  .dial-overlay { width: 430px; height: 430px; justify-content: center; align-items: center; background-color: transparent; }
+  .center { width: 366px; height: 366px; border-radius: 183px; flex-direction: column; align-items: center; justify-content: center; }
+  .status { width: 330px; height: 48px; lines: 1; text-align: center; font-size: 34px; margin-bottom: 24px; background-color: transparent; }
+  .clock { width: 330px; height: 78px; lines: 1; text-align: center; font-size: 58px; color: #202421; background-color: transparent; }
+  .plan { width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; }
+  .plan-title { font-size: 34px; color: #202724; }
+  .plan-label { font-size: 24px; color: #616a65; margin-top: 20px; }
+  .hours { font-size: 74px; color: #202724; margin-top: 14px; margin-bottom: 22px; }
+  .unit { font-size: 28px; }
+  .controls { width: 260px; justify-content: space-between; }
+  .step { width: 108px; height: 68px; border-radius: 18px; background-color: #ffffff; color: #285c32; font-size: 40px; }
+  .done { width: 260px; height: 62px; margin-top: 24px; border-radius: 31px; background-color: #dcefdc; color: #285c32; font-size: 28px; }
+  .history { width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; padding-top: 12px; padding-bottom: 12px; }
+  .history-title { width: 380px; height: 48px; text-align: center; font-size: 38px; color: #202724; }
+  .record-list { width: 380px; height: 250px; margin-top: 12px; }
+  .record { width: 380px; height: 134px; align-items: center; justify-content: space-between; border-bottom-width: 1px; border-bottom-color: #dde2dd; }
+  .record-main { width: 284px; flex-direction: column; }
+  .record-date { width: 284px; lines: 1; color: #202724; font-size: 27px; }
+  .record-time { width: 284px; lines: 1; color: #202724; font-size: 34px; margin-top: 6px; }
+  .record-goal { width: 284px; lines: 1; color: #616a65; font-size: 22px; margin-top: 5px; }
+  .record-status { width: 86px; lines: 1; text-align: right; font-size: 24px; }
+  .history-empty { font-size: 19px; color: #616a65; margin-top: 6px; }
+  .history-back { width: 260px; height: 56px; margin-top: 12px; border-radius: 28px; background-color: #dcefdc; color: #285c32; font-size: 25px; }
+</style>
