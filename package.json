@@ -1,6 +1,6 @@
 {
   "name": "aligner-timer",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "packageManager": "pnpm@^9.9.0",
   "description": "BlueOS 手表牙套计时器，支持佩戴计时和每日记录。",
   "scripts": {

@@ -125,12 +125,14 @@
           <div class="record-main">
             <text class="record-date">{{ $item.date }}</text>
             <text class="record-time">{{ $item.time }}</text>
-            <text class="record-goal">{{ $item.goal }}</text>
+            <div class="record-detail">
+              <text class="record-goal">{{ $item.goal }}</text>
+              <text class="record-status" style="color: {{ $item.reached ? '#285c32' : '#616a65' }};">{{ $item.status }}</text>
+            </div>
           </div>
-          <text class="record-status" style="color: {{ $item.reached ? '#285c32' : '#616a65' }};">{{ $item.status }}</text>
         </list-item>
       </list>
-      <text class="history-empty" if="{{ records.length < 2 }}">从今天开始记录，跨天自动保存</text>
+      <text class="history-empty" if="{{ records.length < 2 }}">跨天自动保存记录</text>
       <input class="history-back" type="button" value="返回计时" onclick="closePlan" />
     </div>
     <div class="plan">
@@ -153,25 +155,26 @@
   .ring { width: 430px; height: 430px; stroke-width: 18px; start-angle: 270deg; total-angle: -360deg; }
   .dial-overlay { width: 430px; height: 430px; justify-content: center; align-items: center; background-color: transparent; }
   .center { width: 366px; height: 366px; border-radius: 183px; flex-direction: column; align-items: center; justify-content: center; }
-  .status { width: 330px; height: 48px; lines: 1; text-align: center; font-size: 34px; margin-bottom: 24px; background-color: transparent; }
+  .status { width: 330px; height: 52px; lines: 1; text-align: center; font-size: 40px; margin-bottom: 24px; background-color: transparent; }
   .clock { width: 330px; height: 78px; lines: 1; text-align: center; font-size: 58px; color: #202421; background-color: transparent; }
   .plan { width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; }
-  .plan-title { font-size: 34px; color: #202724; }
-  .plan-label { font-size: 24px; color: #616a65; margin-top: 20px; }
-  .hours { font-size: 74px; color: #202724; margin-top: 14px; margin-bottom: 22px; }
-  .unit { font-size: 28px; }
-  .controls { width: 260px; justify-content: space-between; }
-  .step { width: 108px; height: 68px; border-radius: 18px; background-color: #ffffff; color: #285c32; font-size: 40px; }
-  .done { width: 260px; height: 62px; margin-top: 24px; border-radius: 31px; background-color: #dcefdc; color: #285c32; font-size: 28px; }
+  .plan-title { width: 380px; height: 48px; lines: 1; text-align: center; font-size: 40px; color: #202724; }
+  .plan-label { width: 380px; height: 36px; lines: 1; text-align: center; font-size: 30px; color: #616a65; margin-top: 10px; }
+  .hours { width: 380px; height: 104px; lines: 1; text-align: center; font-size: 86px; color: #202724; margin-top: 8px; margin-bottom: 12px; }
+  .unit { font-size: 34px; }
+  .controls { width: 350px; height: 96px; justify-content: space-between; }
+  .step { width: 160px; height: 96px; border-radius: 24px; background-color: #ffffff; color: #285c32; font-size: 56px; }
+  .done { width: 350px; height: 84px; margin-top: 16px; border-radius: 42px; background-color: #dcefdc; color: #285c32; font-size: 34px; }
   .history { width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; padding-top: 12px; padding-bottom: 12px; }
-  .history-title { width: 380px; height: 48px; text-align: center; font-size: 38px; color: #202724; }
-  .record-list { width: 380px; height: 250px; margin-top: 12px; }
-  .record { width: 380px; height: 134px; align-items: center; justify-content: space-between; border-bottom-width: 1px; border-bottom-color: #dde2dd; }
-  .record-main { width: 284px; flex-direction: column; }
-  .record-date { width: 284px; lines: 1; color: #202724; font-size: 27px; }
-  .record-time { width: 284px; lines: 1; color: #202724; font-size: 34px; margin-top: 6px; }
-  .record-goal { width: 284px; lines: 1; color: #616a65; font-size: 22px; margin-top: 5px; }
-  .record-status { width: 86px; lines: 1; text-align: right; font-size: 24px; }
-  .history-empty { font-size: 19px; color: #616a65; margin-top: 6px; }
-  .history-back { width: 260px; height: 56px; margin-top: 12px; border-radius: 28px; background-color: #dcefdc; color: #285c32; font-size: 25px; }
+  .history-title { width: 380px; height: 50px; lines: 1; text-align: center; font-size: 40px; color: #202724; }
+  .record-list { width: 380px; height: 280px; margin-top: 12px; }
+  .record { width: 380px; height: 172px; align-items: center; border-bottom-width: 1px; border-bottom-color: #dde2dd; }
+  .record-main { width: 380px; flex-direction: column; }
+  .record-date { width: 380px; height: 40px; lines: 1; color: #202724; font-size: 32px; }
+  .record-time { width: 380px; height: 54px; lines: 1; color: #202724; font-size: 44px; margin-top: 4px; }
+  .record-detail { width: 380px; height: 36px; margin-top: 8px; align-items: center; justify-content: space-between; }
+  .record-goal { width: 264px; lines: 1; color: #616a65; font-size: 28px; }
+  .record-status { width: 104px; lines: 1; text-align: right; font-size: 28px; }
+  .history-empty { width: 380px; height: 34px; lines: 1; text-align: center; font-size: 26px; color: #616a65; margin-top: 6px; }
+  .history-back { width: 350px; height: 84px; margin-top: 12px; border-radius: 42px; background-color: #dcefdc; color: #285c32; font-size: 34px; }
 </style>
