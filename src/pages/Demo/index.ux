@@ -152,7 +152,7 @@
   .screens { width: 100%; height: 100%; background-color: #f4f5f4; }
   .home { width: 100%; height: 100%; flex-direction: column; justify-content: center; align-items: center; }
   .dial { width: 430px; height: 430px; }
-  .ring { width: 430px; height: 430px; stroke-width: 18px; start-angle: 270deg; total-angle: -360deg; }
+  .ring { width: 430px; height: 430px; stroke-width: 18px; start-angle: 270deg; total-angle: 360deg; }
   .dial-overlay { width: 430px; height: 430px; justify-content: center; align-items: center; background-color: transparent; }
   .center { width: 366px; height: 366px; border-radius: 183px; flex-direction: column; align-items: center; justify-content: center; }
   .status { width: 330px; height: 52px; lines: 1; text-align: center; font-size: 40px; margin-bottom: 24px; background-color: transparent; }
