@@ -1,6 +1,6 @@
 {
   "name": "blueos-cat-watchface",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "猫咪陪你戴牙套：BlueOS 猫咪表盘与牙套计时快捷入口"
 }

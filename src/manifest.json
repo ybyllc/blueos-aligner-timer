@@ -1,10 +1,13 @@
 {
   "package": "com.personal.alignertimer",
   "name": "牙套计时器",
-  "versionName": "1.0.2",
-  "versionCode": 3,
+  "versionName": "1.0.3",
+  "versionCode": 4,
   "icon": "/assets/images/aligner-icon.png",
   "features": [
+    {
+      "name": "blueos.storage.exchange"
+    },
     {
       "name": "blueos.window.prompt"
     },

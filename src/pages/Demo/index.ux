@@ -2,7 +2,9 @@
   import storage from '@blueos.storage.storage'
   import schedule from '@blueos.app.appmanager.schedule'
   import prompt from '@blueos.window.prompt'
+  import exchange from '@blueos.storage.exchange'
   import { freshState, advance, restore, duration, dailyRecords } from '../../timer'
+  import { STATUS_KEY, statusSnapshot } from '../../watchface-state'
 
   export default {
     data: { ready: false, wearing: false, clock: '00:00:00', target: 20, percent: 100, records: [] },
@@ -10,7 +12,7 @@
       this.state = freshState(Date.now())
       storage.get({ key: 'aligner-state',
         success: raw => { this.state = restore(raw, Date.now()); this.ready = true; this.refresh(); this.save() },
-        fail: () => { this.ready = true; this.refresh() },
+        fail: () => { this.ready = true; this.refresh(); this.publishStatus() },
       })
     },
     onShow() {
@@ -43,8 +45,28 @@
     save() {
       if (!this.ready) return
       advance(this.state, Date.now())
+      this.publishStatus()
       this.pendingSave = JSON.stringify(this.state)
       this.flushSave()
+    },
+    publishStatus() {
+      this.pendingShared = statusSnapshot(this.state)
+      this.flushShared()
+    },
+    flushShared() {
+      if (this.sharing || !this.pendingShared) return
+      const value = this.pendingShared
+      this.pendingShared = null
+      this.sharing = true
+      try {
+        exchange.set({ key: STATUS_KEY, scope: 'vendor', value,
+          success: () => { this.sharing = false; this.flushShared() },
+          fail: (data, code) => { this.sharing = false; console.log(`表盘状态共享失败：${code}`); this.flushShared() },
+        })
+      } catch (error) {
+        this.sharing = false
+        console.log('表盘状态共享不可用')
+      }
     },
     flushSave() {
       if (this.writing || !this.pendingSave) return

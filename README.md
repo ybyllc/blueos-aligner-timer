@@ -10,9 +10,10 @@
 
 ## 猫咪表盘
 
-<img src="watchface/src/watch300102/assets/preview.png" alt="猫咪陪你表盘设计预览：大号时间、抱着牙齿的橘猫和牙套计时入口" width="280" />
+<img src="watchface/src/watch300102/assets/preview.png" alt="猫咪表盘佩戴中设计预览：牙齿图标居中，圆环和时间显示佩戴状态" width="240" />
+<img src="watchface/src/watch300102/assets/preview-removed.png" alt="猫咪表盘摘下状态设计预览：红色圆环与摘下时长" width="240" />
 
-新增独立的“猫咪陪你”表盘，点击猫咪或“牙套计时”入口可跳转到本应用。上图为设计预览，真机安装和跳转效果待验证。工程与安装方法见 [表盘说明](./watchface/README.md)。
+“猫咪陪你”表盘以牙齿图标为圆心，显示佩戴进度、状态与时间。点击猫咪或圆环区域可跳转到本应用。状态联动需要应用 1.0.3 和表盘 1.0.1 或更新版本；更新后先打开一次应用。上图为设计预览，真机安装、共享与跳转效果待验证。工程与安装方法见 [表盘说明](./watchface/README.md)。
 
 ## 文件结构
 

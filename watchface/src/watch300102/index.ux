@@ -1,9 +1,12 @@
 <script>
   import router from '@blueos.app.appmanager.router'
   import prompt from '@blueos.window.prompt'
+  import exchange from '@blueos.storage.exchange'
+  import { STATUS_KEY, readWatchfaceStatus } from '../../../src/watchface-state'
 
   export default {
-    data: { clock: '--:--', dateLabel: '', launching: false },
+    data: { clock: '--:--', dateLabel: '', launching: false, wearLabel: '点此同步',
+      wearTime: '--:--:--', wearPercent: 0, ringColor: '#7bc77e', ringTrack: '#35413c' },
     onInit() {
       this.refreshClock()
     },
@@ -28,14 +31,47 @@
     },
     startClock() {
       this.stopClock()
+      this.active = true
       this.launching = false
+      this.tick()
+    },
+    tick() {
+      if (!this.active) return
       this.refreshClock()
-      const now = new Date()
-      this.minuteTimer = setTimeout(() => this.startClock(), 60000 - now.getSeconds() * 1000 - now.getMilliseconds() + 20)
+      const now = Date.now()
+      if (!this.nextRead || now >= this.nextRead) {
+        this.nextRead = now + 15000
+        this.readWear()
+      }
+      this.refreshWear()
+      this.ticker = setTimeout(() => this.tick(), 1000 - new Date().getMilliseconds() + 20)
     },
     stopClock() {
-      if (this.minuteTimer) clearTimeout(this.minuteTimer)
-      this.minuteTimer = null
+      this.active = false
+      this.nextRead = 0
+      this.readGeneration = (this.readGeneration || 0) + 1
+      if (this.ticker) clearTimeout(this.ticker)
+      this.ticker = null
+    },
+    readWear() {
+      const generation = ++this.readGeneration
+      const apply = value => {
+        if (!this.active || generation !== this.readGeneration) return
+        this.sharedStatus = value
+        this.refreshWear()
+      }
+      try {
+        exchange.get({ key: STATUS_KEY, scope: 'vendor',
+          success: data => apply(data.value), fail: () => apply(null) })
+      } catch (error) { apply(null) }
+    },
+    refreshWear() {
+      const status = readWatchfaceStatus(this.sharedStatus, Date.now())
+      this.wearLabel = status ? (status.wearing ? '佩戴中' : '已摘下') : '点此同步'
+      this.wearTime = status ? status.time : '--:--:--'
+      this.wearPercent = status ? status.percent : 0
+      this.ringColor = status && !status.wearing ? '#f05252' : '#7bc77e'
+      this.ringTrack = status && !status.wearing ? '#523237' : '#35413c'
     },
     openTimer() {
       if (this.launching) return
@@ -57,22 +93,33 @@
     <div class="cat-button" onclick="openTimer">
       <image class="cat" src="/watch300102/assets/cat.png" />
     </div>
-    <div class="shortcut" onclick="openTimer">
-      <image class="tooth" src="/watch300102/assets/aligner-icon.png" />
-      <text class="shortcut-label">牙套计时</text>
-      <text class="arrow">›</text>
+    <div class="complication" onclick="openTimer">
+      <stack class="wear-dial">
+        <progress class="wear-ring" type="arc" percent="{{ wearPercent }}" style="color: {{ ringColor }}; background-color: {{ ringTrack }};" />
+        <div class="wear-center">
+          <image class="tooth" src="/watch300102/assets/aligner-icon.png" />
+        </div>
+      </stack>
+      <div class="wear-info">
+        <text class="wear-label" style="color: {{ ringColor }};">{{ wearLabel }}</text>
+        <text class="wear-time">{{ wearTime }}</text>
+      </div>
     </div>
   </div>
 </template>
 
 <style>
   .face { width: 100%; height: 100%; background-color: #191d24; flex-direction: column; align-items: center; justify-content: center; }
-  .date { width: 366px; height: 40px; lines: 1; text-align: center; font-size: 28px; color: #c7bfb2; }
-  .clock { width: 410px; height: 108px; lines: 1; text-align: center; font-size: 94px; color: #fff2dc; }
-  .cat-button { width: 320px; height: 180px; justify-content: center; align-items: center; }
-  .cat { width: 320px; height: 180px; }
-  .shortcut { width: 306px; height: 76px; margin-top: 8px; background-color: #c5dfb6; border-radius: 38px; justify-content: center; align-items: center; }
-  .tooth { width: 44px; height: 44px; margin-right: 14px; }
-  .shortcut-label { width: 146px; height: 48px; lines: 1; font-size: 32px; color: #26382c; }
-  .arrow { width: 26px; height: 48px; lines: 1; text-align: center; font-size: 40px; color: #435944; }
+  .date { width: 366px; height: 36px; lines: 1; text-align: center; font-size: 28px; color: #c7bfb2; }
+  .clock { width: 410px; height: 104px; lines: 1; text-align: center; font-size: 90px; color: #fff2dc; }
+  .cat-button { width: 288px; height: 162px; justify-content: center; align-items: center; }
+  .cat { width: 288px; height: 162px; }
+  .complication { width: 324px; height: 132px; align-items: center; justify-content: center; }
+  .wear-dial { width: 124px; height: 124px; }
+  .wear-ring { width: 124px; height: 124px; stroke-width: 8px; start-angle: 270deg; total-angle: 360deg; }
+  .wear-center { width: 124px; height: 124px; justify-content: center; align-items: center; background-color: transparent; }
+  .tooth { width: 64px; height: 64px; }
+  .wear-info { width: 178px; margin-left: 18px; flex-direction: column; justify-content: center; }
+  .wear-label { width: 178px; height: 38px; lines: 1; font-size: 28px; }
+  .wear-time { width: 178px; height: 46px; lines: 1; font-size: 34px; color: #fff2dc; }
 </style>
