@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="222" height="20" viewBox="0 0 222 20">
+  <defs><linearGradient id="mood"><stop stop-color="#ff4b79"/><stop offset=".4" stop-color="#ffa48c"/><stop offset=".7" stop-color="#65bbd9"/><stop offset="1" stop-color="#2dc798"/></linearGradient></defs>
+  <rect x="0" y="6" width="222" height="10" rx="5" fill="url(#mood)"/>
+  <circle cx="164" cy="11" r="8" fill="#000000" stroke="#58bfd2" stroke-width="5"/>
+</svg>
